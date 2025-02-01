@@ -67,3 +67,21 @@ resource "aws_security_group_rule" "ssh_sg_rule_prod" {
   cidr_blocks       = ["167.103.6.209/32"]
   security_group_id = aws_security_group.ssh_access_sg.id
 }
+
+# Creating EC2 instance
+
+resource "aws_instance" "Web_access" {
+  count                       = 3
+  ami                         = var.web_instance_ami
+  instance_type               = var.web_instance_type
+  key_name                    = aws_key_pair.ssh_key.key_name
+  vpc_security_group_ids      = [aws_security_group.frontend_sg.id, aws_security_group.ssh_access_sg.id]
+  user_data                   = file("${var.user_data_file}")
+  user_data_replace_on_change = var.user_data_replacement
+  lifecycle {
+    create_before_destroy = true
+  }
+  tags = {
+    "Name" = "${var.project_name}-${var.env}"
+  }
+}
